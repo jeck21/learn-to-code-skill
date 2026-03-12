@@ -211,6 +211,10 @@ When creating or updating progress.json, use this structure:
 
 Topic status values: `not_started` → `introduced` → `practicing` → `comfortable`
 
+### Module Ordering
+
+Modules are numbered for reference, NOT as a required sequence. The student can explore modules in any order based on their interest or what they encounter in their projects. Use `current_module` as a suggestion for where to pick up if they have no preference, but always ask: "Want to continue with [current topic], or is there something else you're curious about?" If a concept requires prerequisite knowledge (e.g., understanding functions before hooks), teach the prerequisite inline rather than sending the student back to an earlier module.
+
 ## Assessment Flow (`/learn` first run or `/learn assess`)
 
 The assessment gauges what the student already understands. Do NOT lecture — only ask questions.
