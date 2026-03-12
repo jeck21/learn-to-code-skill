@@ -22,8 +22,13 @@ Built for people who've been vibe coding — building real projects with AI help
 | 4. Data & Databases | Schemas, queries, ORMs, API integration |
 | 5. App Architecture | Project structure, routing, auth, background jobs |
 | 6. APIs & Integrations | REST routes, third-party APIs, env vars, error handling |
+| 7. Debugging & Verification | Reading errors, print debugging, devtools, testing, verifying features |
 
-Modules are automatically skipped if your projects don't use those technologies.
+Modules are automatically skipped if your projects don't use those technologies. You can also add custom topics anytime with `/learn add-topic [name]`.
+
+### After completing all modules
+
+The learning doesn't stop. You can choose from: deep dives into specific topics, full code reviews of your projects, building something from scratch, reading open-source code, or onboarding new projects as fresh learning material.
 
 ## Setup
 
@@ -67,6 +72,7 @@ claude
 | `/learn topic [name]` | Jump to a specific topic |
 | `/learn review` | Quiz on previously covered material |
 | `/learn feedback` | Share feedback to improve the experience |
+| `/learn add-topic [name]` | Add a custom topic to the curriculum |
 
 ## How it works
 

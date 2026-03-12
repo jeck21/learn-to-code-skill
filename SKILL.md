@@ -18,6 +18,7 @@ Parse the user's input after `/learn`:
 - `/learn topic [name]` — Jump to a specific topic (e.g., `/learn topic functions`, `/learn topic hooks`).
 - `/learn review` — Quiz on previously covered material.
 - `/learn feedback` — Provide feedback on the learning experience.
+- `/learn add-topic [name]` — Add a custom topic to explore.
 
 Arguments are in: `$ARGUMENTS`
 
@@ -88,6 +89,7 @@ Based on discovered projects, map modules to real files. Use Glob and Read to fi
 | 4. Data & Databases | Schema files (`schema.prisma`, migrations), query functions, Supabase client usage. |
 | 5. App Architecture | `middleware.ts`, directory structure, auth setup, background jobs, config files. |
 | 6. APIs & Integrations | `route.ts`/`route.js` API routes, third-party API calls, `.env` usage, error handling. |
+| 7. Debugging & Verification | Error handling patterns, test files, log/print statements, try/catch blocks. |
 
 Save the mapping to `config.json` under a `"curriculum_map"` key — a list of `{ module, topic, file_path, line_start, line_end, description }` entries. This can be updated as you discover better examples during teaching.
 
@@ -188,7 +190,20 @@ When creating or updating progress.json, use this structure:
         "env_vars": { "status": "not_started", "exercises": [] },
         "error_handling": { "status": "not_started", "exercises": [] }
       }
-    }
+    },
+    "7_debugging": {
+      "name": "Debugging & Verification",
+      "comfort": 0,
+      "status": "not_started",
+      "topics": {
+        "reading_errors": { "status": "not_started", "exercises": [] },
+        "print_debugging": { "status": "not_started", "exercises": [] },
+        "browser_devtools": { "status": "not_started", "exercises": [] },
+        "testing_basics": { "status": "not_started", "exercises": [] },
+        "verifying_features": { "status": "not_started", "exercises": [] }
+      }
+    },
+    "custom": []
   },
   "sessions": []
 }
@@ -352,6 +367,89 @@ Active adjustments based on student feedback. Read at session start.
 - When the student gives explicit feedback via `/learn feedback` or during wrap-up
 - When a pattern emerges (e.g., they've said "too fast" across 2+ sessions)
 - When you notice something working well or poorly during a session (note it and confirm with the student before adding)
+
+## Custom Topics (`/learn add-topic [name]`)
+
+The student can request topics not in the preset curriculum. When they run `/learn add-topic [name]`:
+
+1. **Acknowledge the topic** and ask what sparked their interest — did they encounter it in a project? See it mentioned somewhere? Just curious?
+2. **Find relevant code** in their projects that relates to the topic. If none exists, use a simple standalone example but flag that it's not from their code.
+3. **Add it to progress.json** under the `"custom"` array:
+
+```json
+{
+  "custom": [
+    {
+      "name": "async_await",
+      "added": "2026-03-15",
+      "reason": "Kept seeing it in project code, wanted to understand it",
+      "status": "not_started",
+      "exercises": [],
+      "related_module": "1_fundamentals"
+    }
+  ]
+}
+```
+
+4. **Teach it** using the standard lesson flow. Custom topics can be covered during any session — weave them in when relevant, or dedicate a session if the student asks.
+
+The curriculum should also grow organically during lessons. If you notice the student asking about something that isn't covered (e.g., "what does `async` mean?" while covering functions), offer to add it as a custom topic: "That's a great question — want me to add async/await as a topic so we cover it properly?"
+
+## Debugging & Verification — Module 7
+
+This module teaches the practical skill of figuring out why code breaks and confirming that code works. Topics:
+
+| Topic | What to teach | What to look for in projects |
+|-------|--------------|------------------------------|
+| reading_errors | How to read error messages, stack traces, and terminal output. What the parts mean, where to look first. | Trigger real errors in exercise files, or find error handling in project code |
+| print_debugging | Using `print()` / `console.log()` to inspect values at runtime. Where to place them, what to look for. | Add print statements to copies of project code in `exercises/` |
+| browser_devtools | The browser console, network tab, elements inspector. How to see what's happening in a web app. | Only if student has web projects that can run locally |
+| testing_basics | What tests are, why they exist, how to read a test file. Not writing test suites — just understanding what one does. | Test files in their projects (`*.test.*`, `*.spec.*`, `test_*.py`) |
+| verifying_features | How to confirm a feature works: manual testing, checking edge cases, thinking about "what could go wrong." | Walk through a feature in one of the student's projects end-to-end |
+
+**When to introduce:** This module doesn't need to wait until modules 1-6 are done. Introduce debugging concepts early — even during Module 1, when the student first encounters an error in an exercise. The formal module deepens what they've already started to pick up naturally.
+
+**If the student has no web projects**, skip `browser_devtools` and mark it as `skipped`.
+
+## What's Next — After All Modules
+
+When all core modules (and any custom topics) reach `comfortable` status, the learning doesn't end. Transition to an ongoing mode.
+
+### Check for completion
+
+At the start of each session, if all modules are `comfortable` or `skipped`, congratulate the student and shift to "What's Next" mode.
+
+### What's Next options
+
+Present these paths and let the student choose:
+
+1. **Deep dives** — Pick any topic and go much deeper. Examples: "How does React actually render?", "What happens when an HTTP request travels from browser to server?", "How does an ORM turn your schema into database tables?"
+
+2. **Code review** — Walk through entire files or features in their projects, understanding every line. Different from lessons — this is comprehensive, not focused on one concept.
+
+3. **Build something new** — Start a small project from scratch (not vibe-coded) to apply what they've learned. The tutor guides but doesn't write the code.
+
+4. **Read other people's code** — Explore open-source projects together. Compare patterns to what they've seen in their own code.
+
+5. **New project onboarding** — When the student starts a new vibe-coded project, use it as fresh learning material. Re-scan for new curriculum sources and update `config.json`.
+
+### Tracking in progress.json
+
+Add a `"whats_next"` section:
+
+```json
+{
+  "whats_next": {
+    "activated": "2026-05-01",
+    "deep_dives": [
+      { "topic": "How React rendering works", "date": "2026-05-02", "status": "completed" }
+    ],
+    "code_reviews": [],
+    "projects_built": [],
+    "sessions_since_completion": 5
+  }
+}
+```
 
 ## Pedagogy Rules — FOLLOW STRICTLY
 
