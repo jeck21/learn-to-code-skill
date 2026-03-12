@@ -211,6 +211,54 @@ When creating or updating progress.json, use this structure:
 
 Topic status values: `not_started` → `introduced` → `practicing` → `comfortable`
 
+### Spaced Repetition Review Cards
+
+The `"review_cards"` array at the top level of `progress.json` powers the spaced repetition system. Each card represents a specific concept (more granular than a topic) and tracks when it's due for review.
+
+```json
+{
+  "review_cards": [
+    {
+      "id": "variables_assignment",
+      "concept": "Variable assignment with =",
+      "topic": "variables",
+      "module": "1_fundamentals",
+      "introduced": "2026-03-12",
+      "last_reviewed": "2026-03-12",
+      "next_review": "2026-03-13",
+      "interval_days": 1,
+      "review_history": [
+        { "date": "2026-03-12", "result": "correct" }
+      ]
+    }
+  ]
+}
+```
+
+**Card fields:**
+- `id` — unique snake_case identifier
+- `concept` — short human-readable description (used when picking review questions)
+- `topic` / `module` — links back to the curriculum
+- `introduced` — date the concept was first taught
+- `last_reviewed` — date of the most recent review
+- `next_review` — date the card is next due (compare against today's date)
+- `interval_days` — current interval between reviews
+- `review_history` — log of each review with date and result
+
+**Interval progression:**
+- `correct` → advance to next interval: 1 → 3 → 7 → 14 → 30 → 60 → 120 days
+- `partial` → repeat the same interval
+- `incorrect` → reset interval to 1 day
+
+The fixed intervals are: `[1, 3, 7, 14, 30, 60, 120]`. When `correct`, move to the next value in the sequence. When at 120 and correct, stay at 120 (the concept is deeply retained but still reviewed periodically).
+
+**When to create cards:**
+- At the end of each lesson, during wrap-up, create one card per distinct concept taught. A single topic like "variables" may produce multiple cards (e.g., "variable assignment," "constants vs local variables," "variable substitution").
+- Keep concept descriptions concrete and quizzable — "What does ALL_CAPS mean in Python?" is better than "constants."
+
+**When to retire cards:**
+- Once a card has been answered `correct` 3+ times at the 120-day interval, it can be marked `"retired": true`. Retired cards are excluded from reviews but kept for the record.
+
 ### Module Ordering
 
 Modules are numbered for reference, NOT as a required sequence. The student can explore modules in any order based on their interest or what they encounter in their projects. Use `current_module` as a suggestion for where to pick up if they have no preference, but always ask: "Want to continue with [current topic], or is there something else you're curious about?" If a concept requires prerequisite knowledge (e.g., understanding functions before hooks), teach the prerequisite inline rather than sending the student back to an earlier module.
@@ -237,8 +285,15 @@ For each snippet, ask ONE open-ended question and follow up based on their respo
 
 Each teaching session follows this structure. Always wait for student responses between steps.
 
-### 1. Review (1 question)
-If this isn't the first session, ask ONE quick question about a concept from a prior session. Check progress.json for what was covered.
+### 1. Spaced Review (1-2 questions)
+If this isn't the first session, check `review_cards` in `progress.json` for any cards where `next_review` is today or earlier. These are **due cards**. Pick 1-2 due cards (prioritize the most overdue) and ask a question for each. Show a relevant code snippet from their projects and ask a question that tests the specific concept on the card.
+
+After the student answers each review question:
+- **Correct:** Record `"correct"`, advance `interval_days` to the next step in `[1, 3, 7, 14, 30, 60, 120]`, set `next_review` accordingly.
+- **Partially correct:** Record `"partial"`, keep the same `interval_days`, set `next_review` to today + current interval.
+- **Incorrect or needed hints:** Record `"incorrect"`, reset `interval_days` to 1, set `next_review` to tomorrow.
+
+If no cards are due, skip straight to the lesson. Do NOT ask random review questions — only review what the spaced repetition schedule says is due.
 
 ### 2. Explore
 Read a code snippet relevant to today's topic from their projects (use config.json to find files). Show it and ask: "What do you think this does?" or "What do you notice about this?"
@@ -267,6 +322,7 @@ After they attempt it, read their file and give specific feedback.
 
 ### 6. Wrap-up
 - Summarize what was covered in 2-3 sentences
+- **Create review cards** — For each distinct concept taught in this session, add a new card to `review_cards` with `interval_days: 1` and `next_review` set to tomorrow. Be granular: a lesson on "variables" might produce cards for "variable assignment with =", "constants (ALL_CAPS convention)", and "local vs global scope."
 - **Session feedback check-in** — ask two quick questions:
   1. "Was the pacing today too fast, too slow, or about right?"
   2. "Anything you'd want more or less of?" (tell them this one's optional)
@@ -302,16 +358,26 @@ Module 1: Programming Fundamentals  [====------] 40%
 Module 2: Web Fundamentals           [----------] 0%
   ...
 
+Spaced Review: 3 cards due today | 12 total cards | Next batch: 2 cards on 2026-03-15
+
 Last session: 2026-03-12 — Covered: variables, intro to functions
 Next up: functions (continued)
 ```
 
 ## Review Mode (`/learn review`)
 
-Read progress.json. Find all topics with status `introduced` or `practicing`. Pick 3-5 topics and quiz the student:
-- Show a code snippet related to the topic (from their projects)
-- Ask a question that tests understanding
-- After each answer, give feedback and optionally upgrade the topic status
+Read `review_cards` from `progress.json`. Find all cards where `next_review` is today or earlier (due cards). If there are no due cards, find the 3-5 cards with the nearest upcoming `next_review` dates and offer to review them early.
+
+For each card (up to 5 per review session):
+1. Find a code snippet from their projects related to the card's concept
+2. Show the snippet and ask a question that tests the specific concept
+3. After the student answers, give feedback and update the card:
+   - `correct` → advance interval, update `next_review`
+   - `partial` → keep interval, update `next_review`
+   - `incorrect` → reset interval to 1, set `next_review` to tomorrow
+4. Optionally upgrade the parent topic's status if all its cards are performing well (most recent reviews are `correct` at intervals of 14+ days)
+
+After all review questions, show a brief summary: how many reviewed, how many correct, and when the next batch is due.
 
 ## Topic Jump (`/learn topic [name]`)
 
