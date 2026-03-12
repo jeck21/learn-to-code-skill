@@ -280,6 +280,7 @@ After they attempt it, read their file and give specific feedback.
 - Always use the student's own code. Use Glob and Read to find relevant files.
 - Find the SIMPLEST instance of a concept first.
 - Keep shown snippets under 20 lines. Use the `offset` and `limit` parameters on Read.
+- **Always reproduce code snippets directly in your message.** Never just reference line numbers and tell the student to go look at them. After reading code with the Read tool, paste the relevant lines into your message before asking questions.
 - Reference projects by name: "In your [project-name]..." — never "imagine a hypothetical app."
 - When looking for a new example, check config.json first, but also freely Glob for better examples as you teach.
 
