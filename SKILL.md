@@ -1,6 +1,6 @@
 ---
 name: learn
-description: Interactive coding tutor that teaches programming using your own projects through Socratic questioning
+description: "Coding tutor — try /learn info for all commands. /learn (curriculum), /learn here (explain this code)"
 user_invocable: true
 ---
 
@@ -19,8 +19,77 @@ Parse the user's input after `/learn`:
 - `/learn review` — Quiz on previously covered material.
 - `/learn feedback` — Provide feedback on the learning experience.
 - `/learn add-topic [name]` — Add a custom topic to explore.
+- `/learn here` — Contextual mode: understand code in your current project.
+- `/learn here [filepath]` — Focus on a specific file in the current project.
+- `/learn here [concept]` — Find and teach a concept in the current project.
+- `/learn info` — Show skill overview and all available commands.
 
 Arguments are in: `$ARGUMENTS`
+
+## Info (`/learn info`)
+
+Display this reference card (do not read any state files — just output this directly):
+
+```
+/learn — Interactive Coding Tutor
+
+Learn programming concepts using your own project code through Socratic questioning.
+
+Commands:
+  /learn                   Continue from your last session (or start assessment if new)
+  /learn assess            Run (or re-run) the skills assessment
+  /learn progress          Show your learning dashboard with module progress
+  /learn review            Quiz on previously covered material (spaced repetition)
+  /learn topic [name]      Jump to a specific topic (e.g., /learn topic hooks)
+  /learn add-topic [name]  Add a custom topic to the curriculum
+  /learn feedback          Share feedback about the learning experience
+  /learn here              Understand code in your current project (contextual mode)
+  /learn here [file]       Explain a specific file (e.g., /learn here middleware.ts)
+  /learn here [concept]    Find and teach a concept (e.g., /learn here serverless)
+  /learn info              Show this help message
+
+Modes:
+  Curriculum (/learn)      Structured lessons with exercises, progress tracking, and
+                           spaced repetition. Covers 8 modules from fundamentals to
+                           hosting & infrastructure.
+  Contextual (/learn here) Quick, conversational sessions about code you're working on
+                           right now. No exercises or local state files created.
+
+Modules:
+  1. Programming Fundamentals    5. App Architecture
+  2. Web Fundamentals            6. APIs & Integrations
+  3. React & Components          7. Debugging & Verification
+  4. Data & Databases            8. Hosting & Infrastructure
+```
+
+## Contextual Mode (`/learn here`)
+
+A lightweight mode for understanding code on the fly in any project. Same Socratic pedagogy, but no assessment, no exercises, no structured lesson flow. Sessions are 2-5 minutes, student-driven.
+
+**Important:** `/learn` without "here" is unchanged. All existing routes use the central learning directory and curriculum. Contextual mode is **only** activated by the explicit `/learn here` command.
+
+### Contextual Mode Flow
+
+1. **Detect project** — Quick scan of the current working directory (look for `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `pyproject.toml`, etc.) to identify the project type, languages, and frameworks. Do NOT create any config files.
+
+2. **Load adaptations** — Read `adaptations.md` from the central learning directory if it exists. Apply all active adaptations to your teaching style.
+
+3. **Determine what to teach** based on the argument:
+   - **No argument** (`/learn here`): Briefly describe the project (1-2 sentences based on what you scanned), then ask: "What are you curious about in this project? I can explain any file, function, or concept you point me to."
+   - **File argument** (`/learn here src/middleware.ts`): Read the file, identify the most teachable section (a function, a pattern, a config block), show a snippet under 20 lines, and start Socratic questioning: "What do you think this part does?"
+   - **Concept argument** (`/learn here serverless`): Grep the project for the concept (function names, comments, imports, config values that relate to it). Find the simplest match, show it, and start teaching from there.
+
+4. **Teach conversationally** — All 11 pedagogy rules apply, but there is no formal Explore/Deepen/Challenge structure. Follow the student's curiosity. If they ask about something in the snippet, go deeper. If they want to move on, let them. Keep answers short and question-driven.
+
+5. **End session** — When the student moves on to other work, optionally offer: "Want me to save review cards for what we just covered?" If yes, add cards to `review_cards` in the central `progress.json` with `"type": "contextual"` and `"project": "project-name"` fields on each card.
+
+### Contextual Mode Rules
+
+- **No state files in the project directory.** Never create `progress.json`, `config.json`, `exercises/`, or any other files in the current working directory.
+- **All state reads/writes go to the central learning directory.** If saving review cards, write them to the central `progress.json`.
+- **Contextual sessions are logged** in `progress.json`'s `sessions` array with `"type": "contextual"` and `"project": "project-name"` so the dashboard can show them.
+- **Use the project's own code.** Reference the project by name: "In your [project-name]..." Same rule as curriculum mode.
+- **No exercises.** Contextual mode is conversational only. If the student wants a structured lesson with exercises, suggest they run `/learn topic [name]` instead.
 
 ## First-Run Setup
 
@@ -90,6 +159,7 @@ Based on discovered projects, map modules to real files. Use Glob and Read to fi
 | 5. App Architecture | `middleware.ts`, directory structure, auth setup, background jobs, config files. |
 | 6. APIs & Integrations | `route.ts`/`route.js` API routes, third-party API calls, `.env` usage, error handling. |
 | 7. Debugging & Verification | Error handling patterns, test files, log/print statements, try/catch blocks. |
+| 8. Hosting & Infrastructure | `vercel.json`, `next.config.*`, serverless functions, `inngest/` directory, deployment configs, domain settings. |
 
 Save the mapping to `config.json` under a `"curriculum_map"` key — a list of `{ module, topic, file_path, line_start, line_end, description }` entries. This can be updated as you discover better examples during teaching.
 
@@ -201,6 +271,18 @@ When creating or updating progress.json, use this structure:
         "browser_devtools": { "status": "not_started", "exercises": [] },
         "testing_basics": { "status": "not_started", "exercises": [] },
         "verifying_features": { "status": "not_started", "exercises": [] }
+      }
+    },
+    "8_hosting": {
+      "name": "Hosting & Infrastructure",
+      "comfort": 0,
+      "status": "not_started",
+      "topics": {
+        "what_is_a_server": { "status": "not_started", "exercises": [] },
+        "deployment": { "status": "not_started", "exercises": [] },
+        "serverless": { "status": "not_started", "exercises": [] },
+        "background_jobs": { "status": "not_started", "exercises": [] },
+        "domains_dns": { "status": "not_started", "exercises": [] }
       }
     },
     "custom": []
@@ -362,6 +444,9 @@ Spaced Review: 3 cards due today | 12 total cards | Next batch: 2 cards on 2026-
 
 Last session: 2026-03-12 — Covered: variables, intro to functions
 Next up: functions (continued)
+
+Contextual Sessions: 2 total
+  └ my-web-app (1 session) | notes-automation (1 session)
 ```
 
 ## Review Mode (`/learn review`)
@@ -481,6 +566,22 @@ This module teaches the practical skill of figuring out why code breaks and conf
 **When to introduce:** This module doesn't need to wait until modules 1-6 are done. Introduce debugging concepts early — even during Module 1, when the student first encounters an error in an exercise. The formal module deepens what they've already started to pick up naturally.
 
 **If the student has no web projects**, skip `browser_devtools` and mark it as `skipped`.
+
+## Hosting & Infrastructure — Module 8
+
+This module demystifies the layer between "code on my computer" and "app running on the internet." Students using platforms like Vercel, Inngest, Netlify, or Railway often have working deployments without understanding what these services actually do.
+
+| Topic | What to teach | What to look for in projects |
+|-------|--------------|------------------------------|
+| what_is_a_server | What a server is (a computer that listens for requests and sends responses). The request/response cycle. How their local `npm run dev` creates a server on their machine. The difference between a server (machine) and a server (program). | `next dev` scripts in `package.json`, any `server.ts`/`server.js` files, API routes that handle requests |
+| deployment | What happens when you "deploy" — your code gets copied to a remote server, built, and started. What Vercel/Netlify/Railway actually do: build your code, put it on their servers, give it a URL. What a build step is and why you need one. Environment variables in production vs local. | `vercel.json`, build scripts in `package.json`, `.env` vs `.env.local`, `next.config.*`, any CI/CD config files |
+| serverless | What "serverless" means (someone else's server that scales automatically). How Vercel runs each API route as a separate function that spins up on demand. Cold starts. Why serverless matters for cost and scaling. Contrast with a traditional always-running server. | API routes (`app/api/` directory), `route.ts` files, edge functions, any `export const runtime = 'edge'` declarations |
+| background_jobs | Why some work can't happen during a web request (too slow, needs retries, scheduled). What Inngest/cron jobs/queues do — run code later or in the background. How events trigger functions. How retries and scheduling work. | `inngest/` directory, any files with Inngest client setup, cron configurations, queue handlers, `inngest.createFunction` calls |
+| domains_dns | What a domain name is and how DNS maps it to a server's IP address. What happens between typing a URL and seeing a page (DNS lookup → connect to server → request → response → render). What HTTPS/SSL does. How Vercel/Netlify handle this for you. | Domain config in `vercel.json` or platform settings, any references to custom domains in project files |
+
+**Teaching approach:** This module benefits heavily from analogies and diagrams described in text. The concepts are less about reading code and more about understanding the systems code runs on. Use the student's actual deployment setup (their `vercel.json`, their Inngest functions, their API routes) as concrete examples of these abstract concepts.
+
+**If the student doesn't deploy anywhere yet**, teach the concepts using their local dev server as a starting point ("when you run `npm run dev`, here's what's actually happening...") and use hypothetical deployment scenarios tied to their existing project.
 
 ## What's Next — After All Modules
 
