@@ -22,6 +22,9 @@ Parse the user's input after `/learn`:
 - `/learn here` — Contextual mode: understand code in your current project.
 - `/learn here [filepath]` — Focus on a specific file in the current project.
 - `/learn here [concept]` — Find and teach a concept in the current project.
+- `/learn project` — Start/continue a micro-project (tutor suggests based on progress).
+- `/learn project [type]` — Start a specific type: `bug-hunt`, `code-review`, `specify`, `extend`, `trace`.
+- `/learn project list` — Show available micro-project types based on current progress.
 - `/learn info` — Show skill overview and all available commands.
 
 Arguments are in: `$ARGUMENTS`
@@ -46,6 +49,9 @@ Commands:
   /learn here              Understand code in your current project (contextual mode)
   /learn here [file]       Explain a specific file (e.g., /learn here middleware.ts)
   /learn here [concept]    Find and teach a concept (e.g., /learn here serverless)
+  /learn project           Start/continue a micro-project (tutor suggests based on progress)
+  /learn project [type]    Start a specific type (bug-hunt, code-review, specify, extend, trace)
+  /learn project list      Show available types based on current progress
   /learn info              Show this help message
 
 Modes:
@@ -54,6 +60,9 @@ Modes:
                            hosting & infrastructure.
   Contextual (/learn here) Quick, conversational sessions about code you're working on
                            right now. No exercises or local state files created.
+  Micro-Projects           Multi-step activities that test how concepts connect.
+  (/learn project)         Bug hunts, code reviews, spec-and-verify, extend-and-explain,
+                           trace-and-predict. Three tiers: focused → connected → integrated.
 
 Modules:
   1. Programming Fundamentals    5. App Architecture
@@ -178,6 +187,7 @@ All state files live in the current working directory:
 - `feedback.md` — raw feedback log
 - `adaptations.md` — active teaching adjustments
 - `exercises/` — scratch files for coding challenges
+- `projects/` — micro-project working directories (bug hunts, extend projects, etc.)
 
 At the start of every session:
 1. Read `progress.json`. If it doesn't exist, run first-time setup.
@@ -287,9 +297,38 @@ When creating or updating progress.json, use this structure:
     },
     "custom": []
   },
+  "micro_projects": {
+    "completed": [],
+    "active": null,
+    "tier_levels": {
+      "bug_hunt": "focused",
+      "code_review": "focused",
+      "specify_and_verify": "focused",
+      "extend_and_explain": "focused",
+      "trace_and_predict": "focused"
+    },
+    "total_completed": 0
+  },
   "sessions": []
 }
 ```
+
+**Micro-project completed entries:**
+```json
+{
+  "id": "bug-hunt-01-missing-await",
+  "type": "bug_hunt",
+  "tier": "focused",
+  "module": "6_apis",
+  "topics_practiced": ["error_handling", "rest_routes"],
+  "completed": "2026-03-14",
+  "walkthrough_score": "strong"
+}
+```
+
+**Tier levels:** `focused` → `connected` → `integrated`. Tracked per project type. After a `strong` walkthrough score, offer the next tier for that type.
+
+**Walkthrough scores:** `strong` (explained clearly without hints) / `partial` (needed some hints) / `weak` (couldn't explain key parts). Weak scores suggest revisiting underlying topics before advancing tiers.
 
 Topic status values: `not_started` → `introduced` → `practicing` → `comfortable`
 
@@ -402,6 +441,26 @@ Types of challenges:
 
 After they attempt it, read their file and give specific feedback.
 
+**Micro-project offer:** If the student has reached `practicing` on 2+ topics in the current module, you may offer a micro-project instead of a standard challenge:
+
+> "You've been working on [module topic] for a few sessions now. Instead of a quick exercise, want to try something more hands-on — like [suggest 2 types that match the current module]?"
+
+If the student declines, proceed with a normal challenge. If they accept, run the micro-project flow (see Micro-Projects section). The lesson wrap-up (step 6) still happens after the micro-project completes.
+
+Suggest types that match the current module:
+| Module | Suggested Types |
+|--------|----------------|
+| 1. Fundamentals | Bug Hunt (variable/function bugs), Trace-and-Predict (function calls) |
+| 2. Web | Trace-and-Predict (request/response), Code Review (HTML/JSX) |
+| 3. React | Extend-and-Explain (component feature), Bug Hunt (state/props bugs) |
+| 4. Data & DBs | Trace-and-Predict (query flow), Bug Hunt (schema/query mismatches) |
+| 5. Architecture | Code Review (structure decisions), Specify-and-Verify (feature specs) |
+| 6. APIs | Extend-and-Explain (add endpoint), Trace-and-Predict (API round trip) |
+| 7. Debugging | Bug Hunt (all tiers), Trace-and-Predict (error propagation) |
+| 8. Hosting | Trace-and-Predict (deployment flow), Code Review (config files) |
+
+Rotate through types so the student gets variety across sessions.
+
 ### 6. Wrap-up
 - Summarize what was covered in 2-3 sentences
 - **Create review cards** — For each distinct concept taught in this session, add a new card to `review_cards` with `interval_days: 1` and `next_review` set to tomorrow. Be granular: a lesson on "variables" might produce cards for "variable assignment with =", "constants (ALL_CAPS convention)", and "local vs global scope."
@@ -441,6 +500,11 @@ Module 2: Web Fundamentals           [----------] 0%
   ...
 
 Spaced Review: 3 cards due today | 12 total cards | Next batch: 2 cards on 2026-03-15
+
+Micro-Projects: 3 completed
+  bug-hunt: connected (2 done) | code-review: focused (0 done)
+  specify: focused (1 done)    | extend: focused (0 done)
+  trace: focused (0 done)
 
 Last session: 2026-03-12 — Covered: variables, intro to functions
 Next up: functions (continued)
@@ -622,6 +686,145 @@ Add a `"whats_next"` section:
   }
 }
 ```
+
+## Micro-Projects
+
+Multi-step activities where students orchestrate understanding across concepts. Unlike isolated exercises, micro-projects test whether students understand how pieces connect — the exact gap vibe coders have.
+
+**Key design insight:** Students have Claude Code. The learning isn't in *typing code* — it's in **understanding, directing, debugging, and verifying**. Micro-projects leverage AI assistance, not fight against it.
+
+### Project Types
+
+#### 1. Bug Hunt (Debugging Focus)
+Copy a real file from the student's projects into `projects/bug-hunt-NN-description/`, introduce 1-3 bugs, and describe a **symptom** (not the bug itself). The student diagnoses, explains, and fixes.
+
+**Anti-delegation:** The student must *explain* the bug and *predict the symptom* before fixing. The fix alone isn't sufficient — understanding is verified through explanation.
+
+**Flow:**
+1. **Setup** — Copy a real file, introduce bugs appropriate to the current tier, write a `README.md` describing the symptom
+2. **Investigate** — Student reads the code and identifies what's wrong
+3. **Explain** — Student explains the bug and predicts the exact symptom before any fix
+4. **Fix** — Student fixes the bug (may use Claude Code to help write the fix)
+5. **Deepen** — Socratic follow-ups: "What other bugs could cause similar symptoms?" "Where else in the codebase might this pattern appear?"
+6. **Wrap-up** — Score the walkthrough, create review cards, update progress
+
+#### 2. Code Review
+Present a 20-50 line snippet and ask: What does this do? What could go wrong? What would you change? Trains the exact skill needed when reviewing Claude Code's output.
+
+**Source:** Use real files from the student's projects. Pick code that has at least one improvable aspect (missing error handling, unclear naming, potential edge case).
+
+**Flow:**
+1. **Present** — Show the snippet with minimal context
+2. **Analyze** — Student identifies what the code does, potential issues, and improvements
+3. **Discuss** — Socratic follow-ups on anything they missed or got wrong
+4. **Wrap-up** — Score, cards, progress
+
+#### 3. Specify-and-Verify (Directing AI)
+The student writes a natural-language spec for a feature. The tutor generates an implementation that *literally matches the spec* — including any gaps. The student must catch what they failed to specify.
+
+**Example:** Student says "add search" without specifying debouncing → implementation fires on every keystroke. Student must catch the gap.
+
+**Flow:**
+1. **Brief** — Describe a feature to add (tied to the student's tech stack)
+2. **Specify** — Student writes a natural-language spec
+3. **Generate** — Tutor generates code that literally matches the spec (intentionally including gaps from vague specs)
+4. **Review** — Student reviews the generated code and identifies gaps between intent and spec
+5. **Refine** — Student tightens the spec, tutor regenerates
+6. **Wrap-up** — Score based on gaps caught, cards, progress
+
+#### 4. Extend-and-Explain
+Given working code, add a feature. Students *may use Claude Code* to help write it. After, the tutor conducts a **walkthrough interview**: "What does this line do? Why is it here? What breaks if we remove it?"
+
+**Source:** Generated scaffolds inspired by the student's tech stack, placed in `projects/extend-NN-description/starter/`.
+
+**Flow:**
+1. **Setup** — Present working starter code with a clear feature to add
+2. **Build** — Student adds the feature (may use Claude Code)
+3. **Walkthrough** — Tutor asks questions about specific lines: "What does this do? Why? What breaks without it?"
+4. **Deepen** — Follow up on anything the student can't explain
+5. **Wrap-up** — Score the walkthrough, cards, progress
+
+Inability to answer walkthrough questions reveals delegation without understanding.
+
+#### 5. Trace-and-Predict (Mental Model)
+Trace a multi-step process (e.g., form submission → API → database → response). At each step, the student predicts what happens before seeing the code. Builds the mental model vibe coders lack.
+
+**Source:** Uses real project files (read-only, no copies needed — the student just traces through existing code).
+
+**Flow:**
+1. **Setup** — Describe a user action or data flow in the student's project
+2. **Predict** — At each step, student predicts what happens next before seeing code
+3. **Reveal** — Show the actual code, compare with prediction
+4. **Discuss** — If prediction was wrong, explore why. If right, go deeper.
+5. **Wrap-up** — Score predictions, cards, progress
+
+### Tiers
+
+Each type has three tiers that expand scope naturally:
+
+| Tier | Scope | Bug Hunt Example | Extend Example |
+|------|-------|-----------------|----------------|
+| **Focused** | 1 function, 1 file | Bug in a utility function | Add a parameter to a function |
+| **Connected** | Multiple functions, 1-2 files | Bug in data flow between component and API | Add search that calls existing API |
+| **Integrated** | Full feature, 3+ files | Architectural bug (data fetched in wrong place) | Add pagination across API, DB query, and frontend |
+
+Start at Focused. Offer the next tier only after a `strong` walkthrough score. Tier is tracked per project type in `progress.json` under `micro_projects.tier_levels`.
+
+### Source Code Strategy
+
+- **Bug Hunt & Code Review** — Use real files from the student's projects (copied into `projects/`). More relevant, and these types work well with real code since they're about reading/diagnosing.
+- **Specify-and-Verify & Extend-and-Explain** — Use generated scaffolds inspired by the student's tech stack. These need clean, self-contained starting points.
+- **Trace-and-Predict** — Use real project files (read-only, no copies needed).
+
+### Projects Directory Structure
+
+```
+projects/
+  bug-hunt-01-missing-await/
+    README.md           # Describes the symptom
+    original.ts         # The buggy code
+  extend-02-add-search/
+    README.md           # The requirement
+    starter/            # Initial working code
+```
+
+Each project directory is self-contained. The `README.md` provides context for the student (symptom for bug hunts, requirements for extend projects, etc.).
+
+### `/learn project list`
+
+Read `progress.json` and display available micro-project types with the student's current tier for each:
+
+```
+Micro-Projects
+
+Available types:
+  bug-hunt          Track down bugs in real code        Tier: connected (2 completed)
+  code-review       Review code for issues              Tier: focused (0 completed)
+  specify           Write specs, catch gaps in output   Tier: focused (1 completed)
+  extend            Add features, explain your code     Tier: focused (0 completed)
+  trace             Predict code flow step by step      Tier: focused (0 completed)
+
+Total completed: 3
+
+Start one with: /learn project [type]
+Or just /learn project and I'll suggest one based on your progress.
+```
+
+### `/learn project` (no type specified)
+
+Read progress.json to determine which module the student is working on and what types match. Suggest 1-2 types based on the curriculum integration table. Prefer types the student hasn't tried yet, or types where they're ready for a tier upgrade.
+
+### `/learn project [type]`
+
+Map the type argument: `bug-hunt` → `bug_hunt`, `code-review` → `code_review`, `specify` → `specify_and_verify`, `extend` → `extend_and_explain`, `trace` → `trace_and_predict`.
+
+Look up the student's current tier for this type in `micro_projects.tier_levels`. Run the full flow for that type at the appropriate tier. After completion:
+
+1. Create review cards for concepts practiced
+2. Add a completed entry to `micro_projects.completed`
+3. Increment `micro_projects.total_completed`
+4. If walkthrough score is `strong`, advance `tier_levels` for this type (focused → connected → integrated)
+5. If score is `weak`, suggest revisiting underlying topics before the next project of this type
 
 ## Pedagogy Rules — FOLLOW STRICTLY
 

@@ -8,9 +8,10 @@ Built for people who've been vibe coding — building real projects with AI help
 
 - **Reads your projects** and builds a curriculum around your actual code
 - **Asks questions** instead of lecturing — draws understanding out of you
-- **Tracks progress** across sessions with a structured curriculum (6 modules, 24 topics)
+- **Tracks progress** across sessions with a structured curriculum (8 modules, 24+ topics)
 - **Adapts to feedback** — tell it to slow down, change style, or focus on specific areas
 - **Creates exercises** using your own code patterns
+- **Micro-projects** — multi-step activities (bug hunts, code reviews, spec-and-verify, extend-and-explain, trace-and-predict) that test how concepts connect
 
 ## Curriculum
 
@@ -23,6 +24,7 @@ Built for people who've been vibe coding — building real projects with AI help
 | 5. App Architecture | Project structure, routing, auth, background jobs |
 | 6. APIs & Integrations | REST routes, third-party APIs, env vars, error handling |
 | 7. Debugging & Verification | Reading errors, print debugging, devtools, testing, verifying features |
+| 8. Hosting & Infrastructure | Servers, deployment, serverless, background jobs, domains/DNS |
 
 Modules are automatically skipped if your projects don't use those technologies. You can also add custom topics anytime with `/learn add-topic [name]`.
 
@@ -73,12 +75,15 @@ claude
 | `/learn review` | Quiz on previously covered material |
 | `/learn feedback` | Share feedback to improve the experience |
 | `/learn add-topic [name]` | Add a custom topic to the curriculum |
+| `/learn project` | Start a micro-project (tutor suggests based on progress) |
+| `/learn project [type]` | Start a specific type: `bug-hunt`, `code-review`, `specify`, `extend`, `trace` |
+| `/learn project list` | Show available types and your tier for each |
 
 ## How it works
 
 **First run:** The skill scans nearby directories for projects, identifies their tech stacks, and builds a curriculum map. Then it runs an assessment — showing you snippets from your code and asking what you think they do — to gauge your starting level.
 
-**Each session:** Review a prior concept → Explore new code → Get feedback → Go deeper → Try a challenge → Wrap up with progress saved.
+**Each session:** Review a prior concept → Explore new code → Get feedback → Go deeper → Try a challenge → Wrap up with progress saved. Once you've practiced enough topics in a module, the tutor offers micro-projects — multi-step activities like bug hunts and code reviews that test how concepts connect.
 
 **Feedback loop:** At the end of each session, it asks about pacing. You can also run `/learn feedback` anytime. Adjustments are tracked in `adaptations.md` so the teaching style evolves with you.
 
@@ -93,6 +98,7 @@ These are created in your working directory and excluded from git:
 | `feedback.md` | Raw feedback log |
 | `adaptations.md` | Active teaching adjustments |
 | `exercises/` | Scratch files for coding challenges |
+| `projects/` | Micro-project working directories |
 
 ## Tips
 
